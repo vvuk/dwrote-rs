@@ -1,0 +1,40 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+use winapi::dwrite::{IDWriteLocalizedStrings};
+use winapi::wchar_t;
+use comptr::ComPtr;
+use winapi::winerror::S_OK;
+use winapi::minwindef::{BOOL, FALSE};
+use kernel32;
+
+lazy_static! {
+    static ref SYSTEM_LOCALE: Vec<wchar_t> = {
+        unsafe {
+            let mut locale: Vec<wchar_t> = vec![0; 85];
+            kernel32::GetUserDefaultLocaleName(locale.as_mut_ptr(), locale.len() as i32 - 1);
+            locale
+        }
+    };
+}
+
+pub fn get_locale_string(strings: &mut ComPtr<IDWriteLocalizedStrings>) -> String {
+    unsafe {
+        let mut index: u32 = 0;
+        let mut exists: BOOL = FALSE;
+        let hr = strings.FindLocaleName((*SYSTEM_LOCALE).as_ptr(), &mut index, &mut exists);
+        assert!(hr == S_OK);
+
+        let mut length: u32 = 0;
+        let hr = strings.GetStringLength(index, &mut length);
+        assert!(hr == 0);
+
+        let mut name: Vec<wchar_t> = Vec::with_capacity(length as usize + 1);
+        let hr = strings.GetString(index, name.as_mut_ptr(), length + 1);
+        assert!(hr == 0);
+        name.set_len(length as usize);
+
+        String::from_utf16(&name).ok().unwrap()
+    }
+}
