@@ -2,6 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#![allow(non_upper_case_globals)]
+// FIXME -- remove this later on and clean up, after we've done more hacking
+#![allow(unused_imports)]
+
 #[macro_use]
 extern crate lazy_static;
 #[macro_use(DEFINE_GUID)]
@@ -26,6 +30,9 @@ mod test;
 // We still use the DWrite structs for things like metrics; re-export them
 // here
 pub use winapi::DWRITE_FONT_METRICS;
+
+mod types;
+pub use types::{FontDescriptor};
 
 mod font; pub use font::Font;
 mod font_family; pub use font_family::FontFamily;

@@ -8,6 +8,8 @@ use comptr::ComPtr;
 use winapi::winerror::S_OK;
 use winapi::minwindef::{BOOL, FALSE};
 use kernel32;
+use std::ffi::{OsStr, OsString};
+use std::os::windows::ffi::{OsStrExt, OsStringExt};
 
 lazy_static! {
     static ref SYSTEM_LOCALE: Vec<wchar_t> = {
@@ -36,5 +38,21 @@ pub fn get_locale_string(strings: &mut ComPtr<IDWriteLocalizedStrings>) -> Strin
         name.set_len(length as usize);
 
         String::from_utf16(&name).ok().unwrap()
+    }
+}
+
+// ToWide from https://github.com/retep998/wio-rs/blob/master/src/wide.rs
+
+pub trait ToWide {
+    fn to_wide(&self) -> Vec<u16>;
+    fn to_wide_null(&self) -> Vec<u16>;
+}
+
+impl<T> ToWide for T where T: AsRef<OsStr> {
+    fn to_wide(&self) -> Vec<u16> {
+        self.as_ref().encode_wide().collect()
+    }
+    fn to_wide_null(&self) -> Vec<u16> {
+        self.as_ref().encode_wide().chain(Some(0)).collect()
     }
 }

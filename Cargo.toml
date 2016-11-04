@@ -1,10 +1,10 @@
 [package]
-name = "dwrite"
+name = "dwrote"
 version = "0.1.0"
 authors = ["Vladimir Vukicevic <vladimir@pobox.com>"]
 
 [lib]
-name = "dwrite"
+name = "dwrote"
 
 [dependencies]
 libc = "0.2"

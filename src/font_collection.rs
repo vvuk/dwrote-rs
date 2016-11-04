@@ -3,11 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use comptr::ComPtr;
+use winapi;
 use winapi::dwrite;
 use winapi::FALSE;
 use std::cell::UnsafeCell;
 
-use super::{DWriteFactory, FontFamily, Font, FontFace};
+use super::{DWriteFactory, FontFamily, Font, FontFace, FontDescriptor};
+use helpers::*;
 
 pub struct FontCollectionFamilyIterator {
     collection: ComPtr<dwrite::IDWriteFontCollection>,
@@ -63,6 +65,23 @@ impl FontCollection {
         }
     }
 
+    // Find a font matching the given font descriptor in this
+    // font collection.  
+    pub fn get_font_from_descriptor(&self, desc: &FontDescriptor) -> Option<Font> {
+        if let Some(family) = self.get_font_family_by_name(&desc.family_name) {
+            let font = family.get_first_matching_font(desc.weight, desc.stretch, desc.style);
+            // Exact matches only here
+            if font.weight() == desc.weight &&
+                font.stretch() == desc.stretch &&
+                font.style() == desc.style
+            {
+                return Some(font);
+            }
+        }
+
+        None
+    }
+
     pub fn get_font_from_face(&self, face: &FontFace) -> Option<Font> {
         unsafe {
             let mut font: ComPtr<dwrite::IDWriteFont> = ComPtr::new();
@@ -71,6 +90,24 @@ impl FontCollection {
                 return None;
             }
             Some(Font::take(font))
+        }
+    }
+
+    pub fn get_font_family_by_name(&self, family_name: &str) -> Option<FontFamily> {
+        unsafe {
+            let mut index: u32 = 0;
+            let mut exists: winapi::BOOL = winapi::FALSE;
+            let hr = (*self.native.get()).FindFamilyName(family_name.to_wide_null().as_ptr(), &mut index, &mut exists);
+            assert!(hr == 0);
+            if exists == winapi::FALSE {
+                return None;
+            }
+
+            let mut family: ComPtr<dwrite::IDWriteFontFamily> = ComPtr::new();
+            let hr = (*self.native.get()).GetFontFamily(index, family.getter_addrefs());
+            assert!(hr == 0);
+
+            Some(FontFamily::take(family))
         }
     }
 }

@@ -2,12 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use comptr::ComPtr;
-use winapi::dwrite;
 use std::cell::UnsafeCell;
 
-use super::{FontFace};
+use comptr::ComPtr;
+use winapi;
+use winapi::dwrite;
+
+use super::{FontFamily, FontFace};
 use helpers::*;
+use types::*;
 
 pub struct Font {
     native: UnsafeCell<ComPtr<dwrite::IDWriteFont>>,
@@ -20,8 +23,45 @@ impl Font {
         }
     }
 
+    pub fn to_descriptor(&self) -> FontDescriptor {
+        FontDescriptor {
+            family_name: self.family_name(),
+            stretch: self.stretch(),
+            style: self.style(),
+            weight: self.weight(),
+        }
+    }
+
+    pub fn stretch(&self) -> winapi::DWRITE_FONT_STRETCH {
+        unsafe {
+            (*self.native.get()).GetStretch()
+        }
+    }
+
+    pub fn style(&self) -> winapi::DWRITE_FONT_STYLE {
+        unsafe {
+            (*self.native.get()).GetStyle()
+        }
+    }
+
+    pub fn weight(&self) -> winapi::DWRITE_FONT_WEIGHT {
+        unsafe {
+            (*self.native.get()).GetWeight()
+        }
+    }
+
     pub unsafe fn as_ptr(&self) -> *mut dwrite::IDWriteFont {
         (*self.native.get()).as_ptr()
+    }
+
+    pub fn family_name(&self) -> String {
+        unsafe {
+            let mut family: ComPtr<dwrite::IDWriteFontFamily> = ComPtr::new();
+            let hr = (*self.native.get()).GetFontFamily(family.getter_addrefs());
+            assert!(hr == 0);
+
+            FontFamily::take(family).name()
+        }
     }
 
     pub fn face_name(&self) -> String {
