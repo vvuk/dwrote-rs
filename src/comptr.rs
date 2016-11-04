@@ -27,6 +27,10 @@ impl<T> ComPtr<T> {
         return &mut self.ptr as *mut *mut _ as *mut *mut Q;
     }
 
+    pub fn as_ptr(&self) -> *mut T {
+        self.ptr
+    }
+
     pub fn addref(&self) {
         unsafe {
             assert!(!self.ptr.is_null());

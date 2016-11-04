@@ -11,24 +11,26 @@ extern crate libc;
 extern crate serde;
 extern crate dwrite;
 
+use winapi::dwrite::{DWRITE_FACTORY_TYPE_SHARED};
+use winapi::dwrite::{IDWriteFactory};
+
+use comptr::ComPtr;
+use winapi::S_OK;
+
 mod comptr;
 mod helpers;
 
 #[cfg(test)]
 mod test;
 
-mod font_family;
-pub use font_family::FontFamily;
+// We still use the DWrite structs for things like metrics; re-export them
+// here
+pub use winapi::DWRITE_FONT_METRICS;
 
-mod font_collection;
-pub use font_collection::FontCollection;
-
-use dwrite::DWriteCreateFactory;
-use winapi::dwrite::{DWRITE_FACTORY_TYPE_SHARED};
-use winapi::dwrite::{IDWriteFactory};
-
-use comptr::ComPtr;
-use winapi::S_OK;
+mod font; pub use font::Font;
+mod font_family; pub use font_family::FontFamily;
+mod font_collection; pub use font_collection::FontCollection;
+mod font_face; pub use font_face::FontFace;
 
 DEFINE_GUID!{UuidOfIDWriteFactory, 0xb859ee5a, 0xd838, 0x4b5b, 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48}
 
@@ -38,7 +40,7 @@ lazy_static! {
     static ref DWRITE_FACTORY_RAW_PTR: usize = {
         unsafe {
             let mut factory: ComPtr<IDWriteFactory> = ComPtr::new();
-            let hr = DWriteCreateFactory(
+            let hr = dwrite::DWriteCreateFactory(
                 DWRITE_FACTORY_TYPE_SHARED,
                 &UuidOfIDWriteFactory,
                 factory.getter_addrefs());

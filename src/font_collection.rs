@@ -7,8 +7,7 @@ use winapi::dwrite;
 use winapi::FALSE;
 use std::cell::UnsafeCell;
 
-use super::DWriteFactory;
-use font_family::FontFamily;
+use super::{DWriteFactory, FontFamily, Font, FontFace};
 
 pub struct FontCollectionFamilyIterator {
     collection: ComPtr<dwrite::IDWriteFontCollection>,
@@ -50,6 +49,10 @@ impl FontCollection {
         }
     }
 
+    pub unsafe fn as_ptr(&self) -> *mut dwrite::IDWriteFontCollection {
+        (*self.native.get()).as_ptr()
+    }
+
     pub fn families_iter(&self) -> FontCollectionFamilyIterator {
         unsafe {
             FontCollectionFamilyIterator {
@@ -57,6 +60,17 @@ impl FontCollection {
                 curr: 0,
                 count: (*self.native.get()).GetFontFamilyCount(),
             }
+        }
+    }
+
+    pub fn get_font_from_face(&self, face: &FontFace) -> Option<Font> {
+        unsafe {
+            let mut font: ComPtr<dwrite::IDWriteFont> = ComPtr::new();
+            let hr = (*self.native.get()).GetFontFromFontFace(face.as_ptr(), font.getter_addrefs());
+            if hr != 0 {
+                return None;
+            }
+            Some(Font::take(font))
         }
     }
 }

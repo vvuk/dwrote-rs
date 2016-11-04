@@ -19,6 +19,10 @@ impl FontFamily {
         }
     }
 
+    pub unsafe fn as_ptr(&self) -> *mut dwrite::IDWriteFontFamily {
+        (*self.native.get()).as_ptr()
+    }
+
     pub fn name(&self) -> String {
         unsafe {
             let mut family_names: ComPtr<dwrite::IDWriteLocalizedStrings> = ComPtr::new();
