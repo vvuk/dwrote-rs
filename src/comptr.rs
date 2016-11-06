@@ -9,6 +9,7 @@ use winapi::winerror::S_OK;
 use winapi::minwindef::{BOOL, FALSE};
 use winapi::wchar_t;
 
+#[derive(Debug)]
 pub struct ComPtr<T> {
     ptr: *mut T,
 }

@@ -23,10 +23,9 @@ pub enum FontWeight {
 }
 
 impl FontWeight {
-    fn t(&self) -> winapi::DWRITE_FONT_WEIGHT {
-        let v = *self;
-        unsafe { mem::transmute(v) }
-    }
+    fn t(&self) -> winapi::DWRITE_FONT_WEIGHT { unsafe { mem::transmute(*self) } }
+    pub fn to_u32(&self) -> u32 { unsafe { mem::transmute(*self) } }
+    pub fn from_u32(v: u32) -> FontStretch { unsafe { mem::transmute(v) } }
 }
 
 // mirrors DWRITE_FONT_STRETCH
@@ -46,10 +45,9 @@ pub enum FontStretch {
 }
 
 impl FontStretch {
-    fn t(&self) -> winapi::DWRITE_FONT_STRETCH {
-        let v = *self;
-        unsafe { mem::transmute(v) }
-    }
+    fn t(&self) -> winapi::DWRITE_FONT_STRETCH { unsafe { mem::transmute(*self) } }
+    pub fn to_u32(&self) -> u32 { unsafe { mem::transmute(*self) } }
+    pub fn from_u32(v: u32) -> FontStretch { unsafe { mem::transmute(v) } }
 }
 
 // mirrors DWRITE_FONT_STYLE
@@ -62,13 +60,12 @@ pub enum FontStyle {
 }
 
 impl FontStyle {
-    fn t(&self) -> winapi::DWRITE_FONT_STYLE {
-        let v = *self;
-        unsafe { mem::transmute(v) }
-    }
+    fn t(&self) -> winapi::DWRITE_FONT_STYLE { unsafe { mem::transmute(*self) } }
+    pub fn to_u32(&self) -> u32 { unsafe { mem::transmute(*self) } }
+    pub fn from_u32(v: u32) -> FontStretch { unsafe { mem::transmute(v) } }
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 pub struct FontDescriptor {
     pub family_name: String,
     pub weight: FontWeight,

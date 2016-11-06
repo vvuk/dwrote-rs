@@ -11,6 +11,7 @@ use std::cell::UnsafeCell;
 use super::{DWriteFactory, FontFamily, Font, FontFace, FontDescriptor};
 use helpers::*;
 
+#[derive(Debug)]
 pub struct FontCollectionFamilyIterator {
     collection: ComPtr<dwrite::IDWriteFontCollection>,
     curr: u32,

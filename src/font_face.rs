@@ -11,6 +11,7 @@ use comptr::ComPtr;
 use winapi;
 use winapi::dwrite;
 
+#[derive(Debug)]
 pub struct FontFace {
     native: UnsafeCell<ComPtr<dwrite::IDWriteFontFace>>,
 }

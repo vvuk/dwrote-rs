@@ -11,6 +11,7 @@ use winapi::dwrite;
 use super::*;
 use helpers::*;
 
+#[derive(Debug)]
 pub struct FontFamily {
     native: UnsafeCell<ComPtr<dwrite::IDWriteFontFamily>>,
 }

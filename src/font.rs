@@ -12,6 +12,7 @@ use std::mem;
 use super::*;
 use helpers::*;
 
+#[derive(Debug)]
 pub struct Font {
     native: UnsafeCell<ComPtr<dwrite::IDWriteFont>>,
 }
