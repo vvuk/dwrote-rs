@@ -51,10 +51,17 @@ impl FontCollection {
         }
     }
 
+    pub fn take(native: ComPtr<dwrite::IDWriteFontCollection>) -> FontCollection {
+        FontCollection {
+            native: UnsafeCell::new(native)
+        }
+    }
+
     pub unsafe fn as_ptr(&self) -> *mut dwrite::IDWriteFontCollection {
         (*self.native.get()).as_ptr()
     }
 
+    
     pub fn families_iter(&self) -> FontCollectionFamilyIterator {
         unsafe {
             FontCollectionFamilyIterator {
@@ -62,6 +69,21 @@ impl FontCollection {
                 curr: 0,
                 count: (*self.native.get()).GetFontFamilyCount(),
             }
+        }
+    }
+
+    pub fn get_font_family_count(&self) -> u32 {
+        unsafe {
+            (*self.native.get()).GetFontFamilyCount()
+        }
+    }
+
+    pub fn get_font_family(&self, index: u32) -> FontFamily {
+        unsafe {
+            let mut family: ComPtr<dwrite::IDWriteFontFamily> = ComPtr::new();
+            let hr = (*self.native.get()).GetFontFamily(index, family.getter_addrefs());
+            assert!(hr == 0);
+            FontFamily::take(family)
         }
     }
 

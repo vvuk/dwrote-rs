@@ -7,10 +7,10 @@ use std::cell::UnsafeCell;
 use comptr::ComPtr;
 use winapi;
 use winapi::dwrite;
+use std::mem;
 
-use super::{FontFamily, FontFace};
+use super::*;
 use helpers::*;
-use types::*;
 
 pub struct Font {
     native: UnsafeCell<ComPtr<dwrite::IDWriteFont>>,
@@ -32,21 +32,21 @@ impl Font {
         }
     }
 
-    pub fn stretch(&self) -> winapi::DWRITE_FONT_STRETCH {
+    pub fn stretch(&self) -> FontStretch {
         unsafe {
-            (*self.native.get()).GetStretch()
+            mem::transmute((*self.native.get()).GetStretch().0)
         }
     }
 
-    pub fn style(&self) -> winapi::DWRITE_FONT_STYLE {
+    pub fn style(&self) -> FontStyle {
         unsafe {
-            (*self.native.get()).GetStyle()
+            mem::transmute((*self.native.get()).GetStyle().0)
         }
     }
 
-    pub fn weight(&self) -> winapi::DWRITE_FONT_WEIGHT {
+    pub fn weight(&self) -> FontWeight {
         unsafe {
-            (*self.native.get()).GetWeight()
+            mem::transmute((*self.native.get()).GetWeight().0)
         }
     }
 

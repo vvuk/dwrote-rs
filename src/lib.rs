@@ -2,9 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#![cfg_attr(feature = "serde_derive", feature(proc_macro, rustc_attrs, structural_match))]
 #![allow(non_upper_case_globals)]
 // FIXME -- remove this later on and clean up, after we've done more hacking
 #![allow(unused_imports)]
+
+#[cfg(feature = "serde_derive")]
+#[macro_use]
+extern crate serde_derive;
 
 #[macro_use]
 extern crate lazy_static;
@@ -15,11 +20,18 @@ extern crate libc;
 extern crate serde;
 extern crate dwrite;
 
+#[cfg(feature = "serde_codegen")]
+include!(concat!(env!("OUT_DIR"), "/types.rs"));
+
+#[cfg(feature = "serde_derive")]
+include!("types.rs");
+
 use winapi::dwrite::{DWRITE_FACTORY_TYPE_SHARED};
 use winapi::dwrite::{IDWriteFactory};
 
 use comptr::ComPtr;
 use winapi::S_OK;
+use std::ops::Deref;
 
 mod comptr;
 mod helpers;
@@ -30,9 +42,6 @@ mod test;
 // We still use the DWrite structs for things like metrics; re-export them
 // here
 pub use winapi::DWRITE_FONT_METRICS;
-
-mod types;
-pub use types::{FontDescriptor};
 
 mod font; pub use font::Font;
 mod font_family; pub use font_family::FontFamily;

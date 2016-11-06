@@ -8,7 +8,7 @@ use comptr::ComPtr;
 use winapi;
 use winapi::dwrite;
 
-use super::Font;
+use super::*;
 use helpers::*;
 
 pub struct FontFamily {
@@ -37,14 +37,38 @@ impl FontFamily {
     }
 
     pub fn get_first_matching_font(&self,
-                                   weight: winapi::DWRITE_FONT_WEIGHT,
-                                   stretch: winapi::DWRITE_FONT_STRETCH,
-                                   style: winapi::DWRITE_FONT_STYLE)
+                                   weight: FontWeight,
+                                   stretch: FontStretch,
+                                   style: FontStyle)
         -> Font
     {
         unsafe {
             let mut font: ComPtr<dwrite::IDWriteFont> = ComPtr::new();
-            let hr = (*self.native.get()).GetFirstMatchingFont(weight, stretch, style, font.getter_addrefs());
+            let hr = (*self.native.get()).GetFirstMatchingFont(weight.t(), stretch.t(), style.t(), font.getter_addrefs());
+            assert!(hr == 0);
+            Font::take(font)
+        }
+    }
+
+    pub fn get_font_collection(&self) -> FontCollection {
+        unsafe {
+            let mut collection: ComPtr<dwrite::IDWriteFontCollection> = ComPtr::new();
+            let hr = (*self.native.get()).GetFontCollection(collection.getter_addrefs());
+            assert!(hr == 0);
+            FontCollection::take(collection)
+        }
+    }
+
+    pub fn get_font_count(&self) -> u32 {
+        unsafe {
+            (*self.native.get()).GetFontCount()
+        }
+    }
+
+    pub fn get_font(&self, index: u32) -> Font {
+        unsafe {
+            let mut font: ComPtr<dwrite::IDWriteFont> = ComPtr::new();
+            let hr = (*self.native.get()).GetFont(index, font.getter_addrefs());
             assert!(hr == 0);
             Font::take(font)
         }
