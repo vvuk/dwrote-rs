@@ -6,22 +6,27 @@ use std::cell::UnsafeCell;
 
 use comptr::ComPtr;
 use winapi;
-use winapi::dwrite;
 use std::mem;
+use std::sync::Mutex;
+use std::cell::RefCell;
 
 use super::*;
 use helpers::*;
 
 #[derive(Debug)]
 pub struct Font {
-    native: UnsafeCell<ComPtr<dwrite::IDWriteFont>>,
+    native: UnsafeCell<ComPtr<winapi::IDWriteFont>>,
 }
 
 impl Font {
-    pub fn take(native: ComPtr<dwrite::IDWriteFont>) -> Font {
+    pub fn take(native: ComPtr<winapi::IDWriteFont>) -> Font {
         Font {
-            native: UnsafeCell::new(native)
+            native: UnsafeCell::new(native),
         }
+    }
+
+    pub unsafe fn as_ptr(&self) -> *mut winapi::IDWriteFont {
+        (*self.native.get()).as_ptr()
     }
 
     pub fn to_descriptor(&self) -> FontDescriptor {
@@ -51,13 +56,9 @@ impl Font {
         }
     }
 
-    pub unsafe fn as_ptr(&self) -> *mut dwrite::IDWriteFont {
-        (*self.native.get()).as_ptr()
-    }
-
     pub fn family_name(&self) -> String {
         unsafe {
-            let mut family: ComPtr<dwrite::IDWriteFontFamily> = ComPtr::new();
+            let mut family: ComPtr<winapi::IDWriteFontFamily> = ComPtr::new();
             let hr = (*self.native.get()).GetFontFamily(family.getter_addrefs());
             assert!(hr == 0);
 
@@ -67,7 +68,7 @@ impl Font {
 
     pub fn face_name(&self) -> String {
         unsafe {
-            let mut names: ComPtr<dwrite::IDWriteLocalizedStrings> = ComPtr::new();
+            let mut names: ComPtr<winapi::IDWriteLocalizedStrings> = ComPtr::new();
             let hr = (*self.native.get()).GetFaceNames(names.getter_addrefs());
             assert!(hr == 0);
 
@@ -76,8 +77,10 @@ impl Font {
     }
 
     pub fn create_font_face(&self) -> FontFace {
+        // FIXME create_font_face should cache the FontFace and return it,
+        // there's a 1:1 relationship
         unsafe {
-            let mut face: ComPtr<dwrite::IDWriteFontFace> = ComPtr::new();
+            let mut face: ComPtr<winapi::IDWriteFontFace> = ComPtr::new();
             let hr = (*self.native.get()).CreateFontFace(face.getter_addrefs());
             assert!(hr == 0);
             FontFace::take(face)

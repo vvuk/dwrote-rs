@@ -9,21 +9,28 @@ use std::mem::zeroed;
 
 use comptr::ComPtr;
 use winapi;
-use winapi::dwrite;
+use super::FontMetrics;
 
 #[derive(Debug)]
 pub struct FontFace {
-    native: UnsafeCell<ComPtr<dwrite::IDWriteFontFace>>,
+    native: UnsafeCell<ComPtr<winapi::IDWriteFontFace>>,
+    metrics: FontMetrics,
 }
 
 impl FontFace {
-    pub fn take(native: ComPtr<dwrite::IDWriteFontFace>) -> FontFace {
-        FontFace {
-            native: UnsafeCell::new(native)
+    pub fn take(native: ComPtr<winapi::IDWriteFontFace>) -> FontFace {
+        unsafe {
+            let mut metrics: FontMetrics = zeroed();
+            let cell = UnsafeCell::new(native);
+            (*cell.get()).GetMetrics(&mut metrics);
+            FontFace {
+                native: cell,
+                metrics: metrics,
+            }
         }
     }
 
-    pub unsafe fn as_ptr(&self) -> *mut dwrite::IDWriteFontFace {
+    pub unsafe fn as_ptr(&self) -> *mut winapi::IDWriteFontFace {
         (*self.native.get()).as_ptr()
     }
 
@@ -33,7 +40,11 @@ impl FontFace {
         }
     }
 
-    pub fn get_metrics(&self) -> winapi::DWRITE_FONT_METRICS {
+    pub fn metrics(&self) -> &FontMetrics {
+        &self.metrics
+    }
+
+    pub fn get_metrics(&self) -> FontMetrics {
         unsafe {
             let mut metrics: winapi::DWRITE_FONT_METRICS = zeroed();
             (*self.native.get()).GetMetrics(&mut metrics);

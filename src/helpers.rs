@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use winapi::dwrite::{IDWriteLocalizedStrings};
+use winapi::IDWriteLocalizedStrings;
 use winapi::wchar_t;
 use comptr::ComPtr;
 use winapi::winerror::S_OK;

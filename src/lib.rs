@@ -26,8 +26,8 @@ include!(concat!(env!("OUT_DIR"), "/types.rs"));
 #[cfg(feature = "serde_derive")]
 include!("types.rs");
 
-use winapi::dwrite::{DWRITE_FACTORY_TYPE_SHARED};
-use winapi::dwrite::{IDWriteFactory};
+use winapi::DWRITE_FACTORY_TYPE_SHARED;
+use winapi::IDWriteFactory;
 
 use comptr::ComPtr;
 use winapi::S_OK;
@@ -47,8 +47,13 @@ mod font; pub use font::Font;
 mod font_family; pub use font_family::FontFamily;
 mod font_collection; pub use font_collection::FontCollection;
 mod font_face; pub use font_face::FontFace;
+mod gdi_interop; pub use gdi_interop::GdiInterop;
+mod bitmap_render_target; pub use bitmap_render_target::BitmapRenderTarget;
+mod rendering_params; pub use rendering_params::RenderingParams;
 
 DEFINE_GUID!{UuidOfIDWriteFactory, 0xb859ee5a, 0xd838, 0x4b5b, 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48}
+
+pub use winapi::DWRITE_FONT_METRICS as FontMetrics;
 
 unsafe impl Sync for ComPtr<IDWriteFactory> { }
 
