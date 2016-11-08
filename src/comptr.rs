@@ -7,7 +7,7 @@ use std::ptr;
 use winapi::unknwnbase::IUnknown;
 use winapi::winerror::S_OK;
 use winapi::minwindef::{BOOL, FALSE};
-use winapi::wchar_t;
+use winapi::{REFIID, wchar_t};
 
 #[derive(Debug)]
 pub struct ComPtr<T> {
@@ -30,6 +30,10 @@ impl<T> ComPtr<T> {
 
     pub fn as_ptr(&self) -> *mut T {
         self.ptr
+    }
+
+    pub fn query_interface<Q>(&self, riid: REFIID) -> Option<ComPtr<Q>> {
+        panic!("Here's where the code goes when you need it");
     }
 
     pub fn addref(&self) {

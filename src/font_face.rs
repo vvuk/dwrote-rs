@@ -8,8 +8,10 @@ use std::cell::UnsafeCell;
 use std::mem::zeroed;
 
 use comptr::ComPtr;
-use winapi;
 use super::FontMetrics;
+
+#[macro_use]
+use winapi;
 
 #[derive(Debug)]
 pub struct FontFace {
