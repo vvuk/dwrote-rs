@@ -32,15 +32,10 @@ impl GdiInterop {
         }
     }
 
-    pub fn create_bitmap_render_target(&self,
-                                       hdc: Option<winapi::HDC>,
-                                       width: u32,
-                                       height: u32)
-                                       -> BitmapRenderTarget
-    {
+    pub fn create_bitmap_render_target(&self, width: u32, height: u32) -> BitmapRenderTarget {
         unsafe {
             let mut native: ComPtr<winapi::IDWriteBitmapRenderTarget> = ComPtr::new();
-            let hr = (*self.native.get()).CreateBitmapRenderTarget(hdc.unwrap_or(ptr::null_mut()),
+            let hr = (*self.native.get()).CreateBitmapRenderTarget(ptr::null_mut(),
                                                                    width, height,
                                                                    native.getter_addrefs());
             assert!(hr == 0);

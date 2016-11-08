@@ -5,10 +5,11 @@
 use std::slice;
 use std::ptr;
 use std::cell::UnsafeCell;
-use std::mem::zeroed;
+use std::mem::{zeroed, size_of};
 
 use comptr::ComPtr;
 use winapi;
+use gdi32;
 use super::{FontFace, RenderingParams};
 
 #[derive(Debug)]
@@ -77,6 +78,44 @@ impl BitmapRenderTarget {
                                               rendering_params.as_ptr(),
                                               winapi::RGB(r,g,b),
                                               ptr::null_mut());
+        }
+    }
+
+    // This function expects to have glyphs rendered in WHITE,
+    // and pulls out a u8 vector of width*height*4 size with
+    // the coverage value (we pull out R) broadcast to the alpha
+    // channel, with the color white.  That is, it performs:
+    // RGBX -> xxxR, where xxx = 0xff
+    pub fn get_opaque_values_as_mask(&self) -> Vec<u8> {
+        // Now grossness to pull out the pixels
+        unsafe {
+            let memory_dc = self.get_memory_dc();
+            let mut bitmap: winapi::BITMAP = zeroed();
+            let ret = gdi32::GetObjectW(gdi32::GetCurrentObject(memory_dc, winapi::OBJ_BITMAP),
+                                        size_of::<winapi::BITMAP>() as i32,
+                                        &mut bitmap as *mut _ as *mut winapi::c_void);
+            assert!(ret == size_of::<winapi::BITMAP>() as i32);
+            assert!(bitmap.bmBitsPixel == 32);
+
+            let width = bitmap.bmWidth as usize;
+            let stride = bitmap.bmWidthBytes as usize;
+            let height = bitmap.bmHeight as usize;
+
+            let mut out_bytes: Vec<u8> = vec![0; width * height * 4];
+            let mut out_u32 = slice::from_raw_parts_mut(out_bytes.as_mut_ptr() as *mut u32,
+                                                        width * height);
+
+            for row in 0..height {
+                let in_offset = (row * stride) as isize;
+                let in_u32 = slice::from_raw_parts(bitmap.bmBits.offset(in_offset) as *const u32,
+                                                   width);
+                for col in 0..width {
+                    let r = in_u32[col] & 0xff;
+                    out_u32[width*row + col] = (r << 24) | (0x00ffffffu32);
+                }
+            }
+
+            out_bytes
         }
     }
 }

@@ -15,6 +15,7 @@ extern crate serde_derive;
 extern crate lazy_static;
 #[macro_use(DEFINE_GUID)]
 extern crate winapi;
+extern crate gdi32;
 extern crate kernel32;
 extern crate libc;
 extern crate serde;
@@ -41,7 +42,9 @@ mod test;
 
 // We still use the DWrite structs for things like metrics; re-export them
 // here
-pub use winapi::DWRITE_FONT_METRICS;
+pub use winapi::DWRITE_FONT_METRICS as FontMetrics;
+pub use winapi::DWRITE_GLYPH_OFFSET as GlyphOffset;
+pub use winapi::{DWRITE_MEASURING_MODE_NATURAL, DWRITE_MEASURING_MODE_GDI_CLASSIC, DWRITE_MEASURING_MODE_GDI_NATURAL};
 
 mod font; pub use font::Font;
 mod font_family; pub use font_family::FontFamily;
@@ -52,8 +55,6 @@ mod bitmap_render_target; pub use bitmap_render_target::BitmapRenderTarget;
 mod rendering_params; pub use rendering_params::RenderingParams;
 
 DEFINE_GUID!{UuidOfIDWriteFactory, 0xb859ee5a, 0xd838, 0x4b5b, 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48}
-
-pub use winapi::DWRITE_FONT_METRICS as FontMetrics;
 
 unsafe impl Sync for ComPtr<IDWriteFactory> { }
 
