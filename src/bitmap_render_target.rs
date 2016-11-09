@@ -111,7 +111,7 @@ impl BitmapRenderTarget {
                                                    width);
                 for col in 0..width {
                     let r = in_u32[col] & 0xff;
-                    out_u32[width*row + col] = (r << 24) | (0x70ffffffu32);
+                    out_u32[width*row + col] = (r << 24) | (0x00ffffffu32);
                 }
             }
 
