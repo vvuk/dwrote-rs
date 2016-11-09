@@ -4,8 +4,6 @@
 
 #![cfg_attr(feature = "serde_derive", feature(proc_macro, rustc_attrs, structural_match))]
 #![allow(non_upper_case_globals)]
-// FIXME -- remove this later on and clean up, after we've done more hacking
-#![allow(unused_imports)]
 
 #[cfg(feature = "serde_derive")]
 #[macro_use]
@@ -32,7 +30,6 @@ use winapi::IDWriteFactory;
 
 use comptr::ComPtr;
 use winapi::S_OK;
-use std::ops::Deref;
 
 mod comptr;
 mod helpers;

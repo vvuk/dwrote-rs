@@ -8,8 +8,8 @@ use comptr::ComPtr;
 use winapi::winerror::S_OK;
 use winapi::minwindef::{BOOL, FALSE};
 use kernel32;
-use std::ffi::{OsStr, OsString};
-use std::os::windows::ffi::{OsStrExt, OsStringExt};
+use std::ffi::{OsStr};
+use std::os::windows::ffi::{OsStrExt};
 
 lazy_static! {
     static ref SYSTEM_LOCALE: Vec<wchar_t> = {

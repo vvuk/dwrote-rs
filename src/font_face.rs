@@ -10,7 +10,6 @@ use std::mem::zeroed;
 use comptr::ComPtr;
 use super::FontMetrics;
 
-#[macro_use]
 use winapi;
 
 #[derive(Debug)]

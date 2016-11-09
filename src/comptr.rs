@@ -4,10 +4,7 @@
 
 use std::ops::{Deref, DerefMut};
 use std::ptr;
-use winapi::unknwnbase::IUnknown;
-use winapi::winerror::S_OK;
-use winapi::minwindef::{BOOL, FALSE};
-use winapi::{REFIID, wchar_t};
+use winapi::{IUnknown, REFIID};
 
 #[derive(Debug)]
 pub struct ComPtr<T> {
@@ -32,7 +29,7 @@ impl<T> ComPtr<T> {
         self.ptr
     }
 
-    pub fn query_interface<Q>(&self, riid: REFIID) -> Option<ComPtr<Q>> {
+    pub fn query_interface<Q>(&self, _: REFIID) -> Option<ComPtr<Q>> {
         panic!("Here's where the code goes when you need it");
     }
 

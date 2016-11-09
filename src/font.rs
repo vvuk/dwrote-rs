@@ -7,8 +7,6 @@ use std::cell::UnsafeCell;
 use comptr::ComPtr;
 use winapi;
 use std::mem;
-use std::sync::Mutex;
-use std::cell::RefCell;
 
 use super::*;
 use helpers::*;
