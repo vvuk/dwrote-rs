@@ -8,7 +8,7 @@ use std::cell::UnsafeCell;
 use std::mem::zeroed;
 
 use comptr::ComPtr;
-use super::FontMetrics;
+use super::{FontMetrics, FontFile};
 
 use winapi;
 
@@ -33,6 +33,21 @@ impl FontFace {
 
     pub unsafe fn as_ptr(&self) -> *mut winapi::IDWriteFontFace {
         (*self.native.get()).as_ptr()
+    }
+
+    pub fn get_files(&self) -> Vec<FontFile> {
+        unsafe {
+            let mut number_of_files: u32 = 0;
+            let hr = (*self.native.get()).GetFiles(&mut number_of_files, ptr::null_mut());
+            assert!(hr == 0);
+
+            let mut file_ptrs: Vec<*mut winapi::IDWriteFontFile> =
+                vec![ptr::null_mut(); number_of_files as usize];
+            let hr = (*self.native.get()).GetFiles(&mut number_of_files, file_ptrs.as_mut_ptr());
+            assert!(hr == 0);
+
+            file_ptrs.iter().map(|p| FontFile::take(ComPtr::already_addrefed(*p))).collect()
+        }
     }
 
     pub fn get_glyph_count(&self) -> u16 {

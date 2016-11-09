@@ -43,12 +43,13 @@ pub use winapi::DWRITE_FONT_METRICS as FontMetrics;
 pub use winapi::DWRITE_GLYPH_OFFSET as GlyphOffset;
 pub use winapi::{DWRITE_MEASURING_MODE_NATURAL, DWRITE_MEASURING_MODE_GDI_CLASSIC, DWRITE_MEASURING_MODE_GDI_NATURAL};
 
+mod bitmap_render_target; pub use bitmap_render_target::BitmapRenderTarget;
 mod font; pub use font::Font;
-mod font_family; pub use font_family::FontFamily;
 mod font_collection; pub use font_collection::FontCollection;
 mod font_face; pub use font_face::FontFace;
+mod font_family; pub use font_family::FontFamily;
+mod font_file; pub use font_file::FontFile;
 mod gdi_interop; pub use gdi_interop::GdiInterop;
-mod bitmap_render_target; pub use bitmap_render_target::BitmapRenderTarget;
 mod rendering_params; pub use rendering_params::RenderingParams;
 
 DEFINE_GUID!{UuidOfIDWriteFactory, 0xb859ee5a, 0xd838, 0x4b5b, 0xa2, 0xe8, 0x1a, 0xdc, 0x7d, 0x93, 0xdb, 0x48}

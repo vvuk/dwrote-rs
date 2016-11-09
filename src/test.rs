@@ -32,6 +32,23 @@ fn test_descriptor_round_trip() {
 }
 
 #[test]
+fn test_get_font_file_bytes() {
+    let system_fc = FontCollection::system();
+
+    let arial_family = system_fc.get_font_family_by_name("Arial").unwrap();
+    let arial_font = arial_family.get_first_matching_font(FontWeight::Regular,
+                                                          FontStretch::Normal,
+                                                          FontStyle::Normal);
+    let face = arial_font.create_font_face();
+    let files = face.get_files();
+    assert!(files.len() > 0);
+
+    let bytes = files[0].get_font_file_bytes();
+    println!("Bytes length: {}", bytes.len());
+    assert!(bytes.len() > 0);
+}
+
+#[test]
 fn test_glyph_image() {
     let system_fc = FontCollection::system();
     let arial_family = system_fc.get_font_family_by_name("Arial").unwrap();
@@ -51,13 +68,13 @@ fn test_glyph_image() {
     let device_pixel_ratio = 1.0f32;
     let em_size = 10.0f32;
 
-        let design_units_per_pixel = face.metrics().designUnitsPerEm as f32 / 16. as f32;
-        let scaled_design_units_to_pixels = (em_size * device_pixel_ratio) / design_units_per_pixel;
+    let design_units_per_pixel = face.metrics().designUnitsPerEm as f32 / 16. as f32;
+    let scaled_design_units_to_pixels = (em_size * device_pixel_ratio) / design_units_per_pixel;
 
-        let width = (gm.advanceWidth as i32 - (gm.leftSideBearing + gm.rightSideBearing)) as f32 * scaled_design_units_to_pixels;
-        let height = (gm.advanceHeight as i32 - (gm.topSideBearing + gm.bottomSideBearing)) as f32 * scaled_design_units_to_pixels;
-        let x = (-gm.leftSideBearing) as f32 * scaled_design_units_to_pixels;
-        let y = (gm.verticalOriginY - gm.topSideBearing) as f32 * scaled_design_units_to_pixels;
+    let width = (gm.advanceWidth as i32 - (gm.leftSideBearing + gm.rightSideBearing)) as f32 * scaled_design_units_to_pixels;
+    let height = (gm.advanceHeight as i32 - (gm.topSideBearing + gm.bottomSideBearing)) as f32 * scaled_design_units_to_pixels;
+    let x = (-gm.leftSideBearing) as f32 * scaled_design_units_to_pixels;
+    let y = (gm.verticalOriginY - gm.topSideBearing) as f32 * scaled_design_units_to_pixels;
 
     // FIXME I'm pretty sure we need to do a proper RoundOut type
     // operation on this rect to properly handle any aliasing
