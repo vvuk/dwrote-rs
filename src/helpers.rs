@@ -19,6 +19,9 @@ lazy_static! {
             locale
         }
     };
+    static ref EN_US_LOCALE: Vec<wchar_t> = {
+        OsStr::new("en-us").encode_wide().collect()
+    };
 }
 
 pub fn get_locale_string(strings: &mut ComPtr<IDWriteLocalizedStrings>) -> String {
@@ -26,7 +29,13 @@ pub fn get_locale_string(strings: &mut ComPtr<IDWriteLocalizedStrings>) -> Strin
         let mut index: u32 = 0;
         let mut exists: BOOL = FALSE;
         let hr = strings.FindLocaleName((*SYSTEM_LOCALE).as_ptr(), &mut index, &mut exists);
-        assert!(hr == S_OK);
+        if hr != S_OK || exists == FALSE {
+            let hr = strings.FindLocaleName((*EN_US_LOCALE).as_ptr(), &mut index, &mut exists);
+            if hr != S_OK || exists == FALSE {
+                // Ultimately fall back to first locale on list
+                index = 0;
+            }
+        }
 
         let mut length: u32 = 0;
         let hr = strings.GetStringLength(index, &mut length);
