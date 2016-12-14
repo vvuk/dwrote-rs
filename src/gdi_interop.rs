@@ -9,6 +9,8 @@ use comptr::ComPtr;
 use winapi;
 use super::{BitmapRenderTarget, DWriteFactory, Font, FontFace};
 
+use std::mem;
+
 #[derive(Debug)]
 pub struct GdiInterop {
     native: UnsafeCell<ComPtr<winapi::IDWriteGdiInterop>>,
@@ -42,14 +44,13 @@ impl GdiInterop {
 
     pub fn convert_font_to_logfont(&self, font: Font) -> winapi::LOGFONTW {
         unsafe {
-            let pointer: *mut winapi::LOGFONTW = ptr::null_mut();
-            let is_system_font: *mut winapi::BOOL = ptr::null_mut();
+            let mut logfont: winapi::LOGFONTW = mem::zeroed();
+            let mut is_system_font: winapi::BOOL = winapi::FALSE;
             let hr = (*self.native.get()).ConvertFontToLOGFONT(font.as_ptr(),
-                                                               pointer,
-                                                               is_system_font);
+                                                               &mut logfont,
+                                                               &mut is_system_font);
             assert!(hr == 0);
-            *pointer
-
+            logfont
         }
     }
 

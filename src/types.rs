@@ -78,3 +78,19 @@ pub struct FontDescriptor {
     pub stretch: FontStretch,
     pub style: FontStyle,
 }
+
+impl<'a> From<&'a winapi::LOGFONTW> for FontDescriptor {
+    fn from(logfont: &'a winapi::LOGFONTW) -> FontDescriptor {
+        let gdi = GdiInterop::create();
+        let font = gdi.create_font_from_logfont(logfont);
+        font.to_descriptor()
+    }
+}
+
+impl From<winapi::LOGFONTW> for FontDescriptor {
+    fn from(logfont: winapi::LOGFONTW) -> FontDescriptor {
+        let gdi = GdiInterop::create();
+        let font = gdi.create_font_from_logfont(&logfont);
+        font.to_descriptor()
+    }
+}
