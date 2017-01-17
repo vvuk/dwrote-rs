@@ -114,3 +114,16 @@ pub trait Com<Interface> where Self: Sized {
     }
 }
 
+macro_rules! implement_com_traits {
+    ($typ:ident, $iface:ident, $vtbl:ident, $vtbltype:ident) => {
+        impl Com<$iface> for $typ {
+            type Vtbl = $vtbltype;
+            fn vtbl() -> &'static $vtbltype { $vtbl }
+        }
+
+        impl Com<IUnknown> for $typ {
+            type Vtbl = IUnknownVtbl;
+            fn vtbl() -> &'static IUnknownVtbl { &$vtbl.parent }
+        }
+    }
+}
