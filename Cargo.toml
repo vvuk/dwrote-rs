@@ -23,6 +23,7 @@ kernel32-sys = "0.2"
 gdi32-sys = "0.2"
 serde = "0.8"
 serde_derive = {version = "0.8", optional = true}
+truetype = "*"
 
 [build-dependencies.serde_codegen]
 version = "0.8"

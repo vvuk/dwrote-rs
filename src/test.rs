@@ -3,6 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use super::*;
+use truetype;
+use std::io::Cursor;
+use truetype::Value;
+use std::cmp::{min, max};
 
 #[test]
 fn test_system_family_iter() {
@@ -43,28 +47,6 @@ fn test_get_font_file_bytes() {
 
     let bytes = files[0].get_font_file_bytes();
     assert!(bytes.len() > 0);
-}
-
-#[test]
-fn test_create_font_file_from_bytes() {
-    let system_fc = FontCollection::system();
-
-    let arial_family = system_fc.get_font_family_by_name("Arial").unwrap();
-    let arial_font = arial_family.get_first_matching_font(FontWeight::Regular,
-                                                          FontStretch::Normal,
-                                                          FontStyle::Normal);
-    let face = arial_font.create_font_face();
-    let files = face.get_files();
-    assert!(files.len() > 0);
-
-    let bytes = files[0].get_font_file_bytes();
-    assert!(bytes.len() > 0);
-
-    // now go back
-    let new_font = FontFile::new_from_data(&bytes);
-    assert!(new_font.is_some());
-
-    let new_font = new_font.unwrap();
 }
 
 #[test]
@@ -119,4 +101,113 @@ fn test_glyph_image() {
                       &(255.0f32, 255.0f32, 255.0f32));
     let bytes = rt.get_opaque_values_as_mask();
     println!("bytes length: {}", bytes.len());
+}
+
+type FontTableTag = u32;
+
+fn make_tag(tag_bytes: &[u8]) -> FontTableTag {
+    assert!(tag_bytes.len() == 4);
+    unsafe { *(tag_bytes.as_ptr() as *const FontTableTag) }
+}
+
+//macro_rules! try_lossy(($result:expr) => (try!($result.map_err(|_| (())))));
+macro_rules! try_lossy(($result:expr) => (try!($result.map_err(|_| panic!("Failed")))));
+
+#[derive(Debug)]
+struct FontInfo {
+    family_name: String,
+    face_name: String,
+    weight: u32,
+    stretch: u32,
+    style: FontStyle,
+}
+
+impl FontInfo {
+    fn new_from_face(face: &FontFace) -> Result<FontInfo, ()> {
+        let mut info = FontInfo {
+            family_name: "".to_owned(),
+            face_name: "".to_owned(),
+            weight: 0,
+            stretch: 0,
+            style: FontStyle::Normal,
+        };
+
+        if let Some(name_table_bytes) = face.get_font_table(make_tag(b"name")) {
+            use truetype::NamingTable;
+            println!("name table len {}", name_table_bytes.len());
+            let mut table = Cursor::new(&name_table_bytes);
+            let names = try_lossy!(NamingTable::read(&mut table));
+            let (family, face) = match names {
+                NamingTable::Format0(ref table) => {
+                    if table.count < 3 { return Err(()); }
+                    let strings = try_lossy!(table.strings());
+                    let family = strings[1].clone();
+                    let face = strings[2].clone();
+                    (family, face)
+                },
+                NamingTable::Format1(ref table) => {
+                    if table.count < 3 { return Err(()); }
+                    let strings = try_lossy!(table.strings());
+                    let family = strings[1].clone();
+                    let face = strings[2].clone();
+                    (family, face)
+                }
+            };
+            info.family_name = family;
+            info.face_name = face;
+        } else {
+            return Err(());
+        }
+
+        if let Some(os2_table_bytes) = face.get_font_table(make_tag(b"OS/2")) {
+            use truetype::WindowsMetrics;
+            let mut table = Cursor::new(&os2_table_bytes);
+            let metrics = try_lossy!(WindowsMetrics::read(&mut table));
+            let (weight_val, width_val, italic_bool) = match metrics {
+                WindowsMetrics::Version3(ref m) => {
+                    (m.weight_class, m.width_class, m.selection_flags.0 & 1 == 1)
+                },
+                WindowsMetrics::Version5(ref m) => {
+                    (m.weight_class, m.width_class, m.selection_flags.0 & 1 == 1)
+                },
+            };
+
+            info.weight = min(9, max(1, weight_val / 100)) as u32;
+            info.stretch = min(9, max(1, width_val)) as u32;
+            info.style = if italic_bool {
+                FontStyle::Italic
+            } else {
+                FontStyle::Normal
+            };
+        } else {
+            return Err(());
+        }
+
+        Ok(info)
+    }
+}
+
+#[test]
+fn test_create_font_file_from_bytes() {
+    let system_fc = FontCollection::system();
+
+    let arial_family = system_fc.get_font_family_by_name("Arial").unwrap();
+    let arial_font = arial_family.get_first_matching_font(FontWeight::Regular,
+                                                          FontStretch::Normal,
+                                                          FontStyle::Normal);
+    let face = arial_font.create_font_face();
+    let files = face.get_files();
+    assert!(files.len() > 0);
+
+    let bytes = files[0].get_font_file_bytes();
+    assert!(bytes.len() > 0);
+
+    // now go back
+    let new_font = FontFile::new_from_data(&bytes);
+    assert!(new_font.is_some());
+
+    let new_font = new_font.unwrap();
+
+    let info = FontInfo::new_from_face(&new_font.create_face(0, super::DWRITE_FONT_SIMULATIONS_NONE));
+    println!("{:?}", info);
 }

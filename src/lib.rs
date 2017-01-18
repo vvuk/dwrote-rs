@@ -17,6 +17,7 @@ extern crate gdi32;
 extern crate kernel32;
 extern crate libc;
 extern crate serde;
+extern crate truetype;
 
 #[cfg(feature = "serde_codegen")]
 include!(concat!(env!("OUT_DIR"), "/types.rs"));

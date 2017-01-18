@@ -4,21 +4,24 @@ use std::{mem, ptr};
 use std::collections::HashMap;
 use std::sync::{Mutex, atomic};
 use std::marker::Send;
+use winapi;
 use winapi::{IUnknown, IUnknownVtbl};
 use winapi::{IDWriteFontFileStream, IDWriteFontFileStreamVtbl};
 use winapi::{IDWriteFontFileLoader, IDWriteFontFileLoaderVtbl};
+use winapi::{IDWriteFontFileEnumerator, IDWriteFontFileEnumeratorVtbl};
 use winapi::IDWriteFontFile;
-use winapi::{E_FAIL, E_INVALIDARG, E_NOTIMPL, S_OK};
-use winapi::{c_void, UINT32, UINT64, ULONG, HRESULT, REFIID};
+use winapi::{E_FAIL, E_INVALIDARG, E_NOTIMPL, S_OK, TRUE, FALSE};
+use winapi::{BOOL, c_void, UINT32, UINT64, ULONG, HRESULT, REFIID};
 
 use super::DWriteFactory;
+use font_file::FontFile;
 use comptr::ComPtr;
 use com_helpers::*;
 
-struct FontFileLoader;
-
 DEFINE_GUID!{UuidOfIDWriteFontFileLoader, 0x727cad4e, 0xd6af, 0x4c9e, 0x8a, 0x08, 0xd6, 0x95, 0xb1, 0x1c, 0xaa, 0x49}
 DEFINE_GUID!{UuidOfIDWriteFontFileStream, 0x6d4865fe, 0x0ab8, 0x4d91, 0x8f, 0x62, 0x5d, 0xd6, 0xbe, 0x34, 0xa3, 0xe0}
+DEFINE_GUID!{UuidOfIDWriteFontCollectionLoader, 0xcca920e4, 0x52f0, 0x492b, 0xbf, 0xa8, 0x29, 0xc7, 0x2e, 0xe0, 0xa4, 0x68}
+DEFINE_GUID!{UuidOfIDWriteFontFileEnumerator, 0x72755049, 0x5ff7, 0x435d, 0x83, 0x48, 0x4b, 0xe9, 0x7c, 0xfa, 0x6c, 0x7c}
 
 const FontFileLoaderVtbl: &'static IDWriteFontFileLoaderVtbl = &IDWriteFontFileLoaderVtbl {
     parent: implement_iunknown!(static IDWriteFontFileLoader, UuidOfIDWriteFontFileLoader, FontFileLoader),
@@ -51,15 +54,7 @@ const FontFileLoaderVtbl: &'static IDWriteFontFileLoaderVtbl = &IDWriteFontFileL
     }
 };
 
-impl Com<IDWriteFontFileLoader> for FontFileLoader {
-    type Vtbl = IDWriteFontFileLoaderVtbl;
-    fn vtbl() -> &'static IDWriteFontFileLoaderVtbl { FontFileLoaderVtbl }
-}
-
-impl Com<IUnknown> for FontFileLoader {
-    type Vtbl = IUnknownVtbl;
-    fn vtbl() -> &'static IUnknownVtbl { &FontFileLoaderVtbl.parent }
-}
+struct FontFileLoader;
 
 impl FontFileLoader {
     pub fn new() -> FontFileLoader {
@@ -67,13 +62,10 @@ impl FontFileLoader {
     }
 }
 
+implement_com_traits!{FontFileLoader, IDWriteFontFileLoader, FontFileLoaderVtbl, IDWriteFontFileLoaderVtbl}
+
 unsafe impl Send for FontFileLoader {}
 unsafe impl Sync for FontFileLoader {}
-
-struct FontFileStream {
-    refcount: atomic::AtomicUsize,
-    data: Vec<u8>,
-}
 
 const FontFileStreamVtbl: &'static IDWriteFontFileStreamVtbl = &IDWriteFontFileStreamVtbl {
     parent: implement_iunknown!(IDWriteFontFileStream, UuidOfIDWriteFontFileStream, FontFileStream),
@@ -126,6 +118,11 @@ const FontFileStreamVtbl: &'static IDWriteFontFileStreamVtbl = &IDWriteFontFileS
     },
 };
 
+struct FontFileStream {
+    refcount: atomic::AtomicUsize,
+    data: Vec<u8>,
+}
+
 impl FontFileStream {
     pub fn new(data: &[u8]) -> FontFileStream {
         FontFileStream {
@@ -135,15 +132,68 @@ impl FontFileStream {
     }
 }
 
-impl Com<IDWriteFontFileStream> for FontFileStream {
-    type Vtbl = IDWriteFontFileStreamVtbl;
-    fn vtbl() -> &'static IDWriteFontFileStreamVtbl { FontFileStreamVtbl }
+implement_com_traits!{FontFileStream, IDWriteFontFileStream, FontFileStreamVtbl, IDWriteFontFileStreamVtbl}
+
+const FontFileEnumeratorVtbl: &'static IDWriteFontFileEnumeratorVtbl = &IDWriteFontFileEnumeratorVtbl {
+    parent: implement_iunknown!(IDWriteFontFileEnumerator, UuidOfIDWriteFontFileEnumerator, FontFileEnumerator),
+    MoveNext: {
+        unsafe extern "system" fn MoveNext(
+            This: *mut IDWriteFontFileEnumerator,
+            hasCurrentFile: *mut BOOL) -> HRESULT
+        {
+            let mut this = FontFileEnumerator::from_interface(This);
+            this.move_next(hasCurrentFile)
+        }
+        MoveNext
+    },
+    GetCurrentFontFile: {
+        unsafe extern "system" fn GetCurrentFontFile(
+            This: *mut IDWriteFontFileEnumerator,
+            fontFile: *mut *mut IDWriteFontFile) -> HRESULT
+        {
+            let mut this = FontFileEnumerator::from_interface(This);
+            this.get_current_font_file(fontFile)
+        }
+        GetCurrentFontFile
+    },
+};
+
+struct FontFileEnumerator {
+    refcount: atomic::AtomicUsize,
+    files: Vec<FontFile>,
+    next_index: usize,
 }
 
-impl Com<IUnknown> for FontFileStream {
-    type Vtbl = IUnknownVtbl;
-    fn vtbl() -> &'static IUnknownVtbl { &FontFileStreamVtbl.parent }
+impl FontFileEnumerator {
+    fn new(files: Vec<FontFile>) -> FontFileEnumerator {
+        FontFileEnumerator {
+            refcount: atomic::ATOMIC_USIZE_INIT,
+            files: files,
+            next_index: 0,
+        }
+    }
+
+    fn move_next(&mut self, has_current_file: *mut BOOL) -> HRESULT {
+        unsafe {
+            *has_current_file = FALSE;
+            if self.next_index < self.files.len() {
+                self.next_index += 1;
+                *has_current_file = TRUE;
+            }
+            S_OK
+        }
+    }
+
+    fn get_current_font_file(&mut self, font_file: *mut *mut IDWriteFontFile) -> HRESULT {
+        unsafe {
+            let mut ptr = ComPtr::from_ptr(self.files[self.next_index].as_ptr());
+            *font_file = ptr.forget();
+            S_OK
+        }
+    }
 }
+
+implement_com_traits!{FontFileEnumerator, IDWriteFontFileEnumerator, FontFileEnumeratorVtbl, IDWriteFontFileEnumeratorVtbl}
 
 static mut FONT_FILE_KEY: atomic::AtomicUsize = atomic::ATOMIC_USIZE_INIT;
 
