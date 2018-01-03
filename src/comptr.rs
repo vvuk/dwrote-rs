@@ -4,7 +4,9 @@
 
 use std::ops::{Deref, DerefMut};
 use std::ptr;
-use winapi::{IUnknown, REFIID, S_OK, E_NOINTERFACE};
+use winapi::um::unknwnbase::IUnknown;
+use winapi::shared::guiddef::REFIID;
+use winapi::shared::winerror::{S_OK, E_NOINTERFACE};
 
 #[derive(Debug)]
 pub struct ComPtr<T> {
