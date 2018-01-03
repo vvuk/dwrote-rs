@@ -8,17 +8,20 @@ use std::cell::UnsafeCell;
 
 use comptr::ComPtr;
 
-use winapi;
+use winapi::ctypes::c_void;
+use winapi::um::dwrite::{IDWriteFontFace, IDWriteFontFile, IDWriteFontFileStream};
+use winapi::um::dwrite::{IDWriteFontFileLoader, DWRITE_FONT_SIMULATIONS};
+use winapi::um::dwrite::{DWRITE_FONT_FACE_TYPE_UNKNOWN, DWRITE_FONT_FACE_TYPE};
+use winapi::um::dwrite::DWRITE_FONT_FILE_TYPE_UNKNOWN;
 
 use font_file_loader_impl::DataFontHelper;
 use font_face::FontFace;
 use super::DWriteFactory;
 
-#[derive(Debug)]
 pub struct FontFile {
-    native: UnsafeCell<ComPtr<winapi::IDWriteFontFile>>,
+    native: UnsafeCell<ComPtr<IDWriteFontFile>>,
     data_key: usize,
-    face_type: winapi::DWRITE_FONT_FACE_TYPE,
+    face_type: DWRITE_FONT_FACE_TYPE,
 }
 
 impl FontFile {
@@ -28,7 +31,7 @@ impl FontFile {
         let mut ff = FontFile {
             native: UnsafeCell::new(font_file),
             data_key: key,
-            face_type: winapi::DWRITE_FONT_FACE_TYPE_UNKNOWN,
+            face_type: DWRITE_FONT_FACE_TYPE_UNKNOWN,
         };
 
         if ff.analyze() == false {
@@ -40,10 +43,10 @@ impl FontFile {
     }
 
     fn analyze(&mut self) -> bool {
-        let mut face_type = winapi::DWRITE_FONT_FACE_TYPE_UNKNOWN;
+        let mut face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
         unsafe {
             let mut supported = 0;
-            let mut _file_type = winapi::DWRITE_FONT_FILE_TYPE_UNKNOWN;
+            let mut _file_type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
             let mut _num_faces = 0;
 
             let hr = (*self.as_ptr()).Analyze(&mut supported, &mut _file_type, &mut face_type, &mut _num_faces);
@@ -55,11 +58,11 @@ impl FontFile {
         true
     }
 
-    pub fn take(native: ComPtr<winapi::IDWriteFontFile>) -> FontFile {
+    pub fn take(native: ComPtr<IDWriteFontFile>) -> FontFile {
         let mut ff = FontFile {
             native: UnsafeCell::new(native),
             data_key: 0,
-            face_type: winapi::DWRITE_FONT_FACE_TYPE_UNKNOWN,
+            face_type: DWRITE_FONT_FACE_TYPE_UNKNOWN,
         };
         ff.analyze();
         ff
@@ -73,7 +76,7 @@ impl FontFile {
         }
     }
 
-    pub unsafe fn as_ptr(&self) -> *mut winapi::IDWriteFontFile {
+    pub unsafe fn as_ptr(&self) -> *mut IDWriteFontFile {
         (*self.native.get()).as_ptr()
     }
 
@@ -82,16 +85,16 @@ impl FontFile {
     // or streams.
     pub fn get_font_file_bytes(&self) -> Vec<u8> {
         unsafe {
-            let mut ref_key: *const winapi::c_void = ptr::null();
+            let mut ref_key: *const c_void = ptr::null();
             let mut ref_key_size: u32 = 0;
             let hr = (*self.native.get()).GetReferenceKey(&mut ref_key, &mut ref_key_size);
             assert!(hr == 0);
 
-            let mut loader: ComPtr<winapi::IDWriteFontFileLoader> = ComPtr::new();
+            let mut loader: ComPtr<IDWriteFontFileLoader> = ComPtr::new();
             let hr = (*self.native.get()).GetLoader(loader.getter_addrefs());
             assert!(hr == 0);
 
-            let mut stream: ComPtr<winapi::IDWriteFontFileStream> = ComPtr::new();
+            let mut stream: ComPtr<IDWriteFontFileStream> = ComPtr::new();
             let hr = loader.CreateStreamFromKey(ref_key, ref_key_size, stream.getter_addrefs());
             assert!(hr == 0);
 
@@ -99,8 +102,8 @@ impl FontFile {
             let hr = stream.GetFileSize(&mut file_size);
             assert!(hr == 0);
 
-            let mut fragment_start: *const winapi::c_void = ptr::null();
-            let mut fragment_context: *mut winapi::c_void = ptr::null_mut();
+            let mut fragment_start: *const c_void = ptr::null();
+            let mut fragment_context: *mut c_void = ptr::null_mut();
             let hr = stream.ReadFileFragment(&mut fragment_start, 0, file_size, &mut fragment_context);
             assert!(hr == 0);
 
@@ -113,9 +116,9 @@ impl FontFile {
         }
     }
 
-    pub fn create_face(&self, face_index: u32, simulations: winapi::DWRITE_FONT_SIMULATIONS) -> FontFace {
+    pub fn create_face(&self, face_index: u32, simulations: DWRITE_FONT_SIMULATIONS) -> FontFace {
         unsafe {
-            let mut face: ComPtr<winapi::IDWriteFontFace> = ComPtr::new();
+            let mut face: ComPtr<IDWriteFontFace> = ComPtr::new();
             let ptr = self.as_ptr();
             let hr = (*DWriteFactory()).CreateFontFace(self.face_type, 1, &ptr,
                                                        face_index, simulations, face.getter_addrefs());

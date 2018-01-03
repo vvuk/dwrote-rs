@@ -5,25 +5,25 @@
 use std::cell::UnsafeCell;
 
 use comptr::ComPtr;
-use winapi;
+use winapi::um::dwrite::{IDWriteFontFace, IDWriteLocalizedStrings, IDWriteFont};
+use winapi::um::dwrite::IDWriteFontFamily;
 use std::mem;
 
 use super::*;
 use helpers::*;
 
-#[derive(Debug)]
 pub struct Font {
-    native: UnsafeCell<ComPtr<winapi::IDWriteFont>>,
+    native: UnsafeCell<ComPtr<IDWriteFont>>,
 }
 
 impl Font {
-    pub fn take(native: ComPtr<winapi::IDWriteFont>) -> Font {
+    pub fn take(native: ComPtr<IDWriteFont>) -> Font {
         Font {
             native: UnsafeCell::new(native),
         }
     }
 
-    pub unsafe fn as_ptr(&self) -> *mut winapi::IDWriteFont {
+    pub unsafe fn as_ptr(&self) -> *mut IDWriteFont {
         (*self.native.get()).as_ptr()
     }
 
@@ -38,25 +38,25 @@ impl Font {
 
     pub fn stretch(&self) -> FontStretch {
         unsafe {
-            mem::transmute::<u32, FontStretch>((*self.native.get()).GetStretch().0)
+            mem::transmute::<u32, FontStretch>((*self.native.get()).GetStretch())
         }
     }
 
     pub fn style(&self) -> FontStyle {
         unsafe {
-            mem::transmute::<u32, FontStyle>((*self.native.get()).GetStyle().0)
+            mem::transmute::<u32, FontStyle>((*self.native.get()).GetStyle())
         }
     }
 
     pub fn weight(&self) -> FontWeight {
         unsafe {
-            mem::transmute::<u32, FontWeight>((*self.native.get()).GetWeight().0)
+            mem::transmute::<u32, FontWeight>((*self.native.get()).GetWeight())
         }
     }
 
     pub fn family_name(&self) -> String {
         unsafe {
-            let mut family: ComPtr<winapi::IDWriteFontFamily> = ComPtr::new();
+            let mut family: ComPtr<IDWriteFontFamily> = ComPtr::new();
             let hr = (*self.native.get()).GetFontFamily(family.getter_addrefs());
             assert!(hr == 0);
 
@@ -66,7 +66,7 @@ impl Font {
 
     pub fn face_name(&self) -> String {
         unsafe {
-            let mut names: ComPtr<winapi::IDWriteLocalizedStrings> = ComPtr::new();
+            let mut names: ComPtr<IDWriteLocalizedStrings> = ComPtr::new();
             let hr = (*self.native.get()).GetFaceNames(names.getter_addrefs());
             assert!(hr == 0);
 
@@ -78,7 +78,7 @@ impl Font {
         // FIXME create_font_face should cache the FontFace and return it,
         // there's a 1:1 relationship
         unsafe {
-            let mut face: ComPtr<winapi::IDWriteFontFace> = ComPtr::new();
+            let mut face: ComPtr<IDWriteFontFace> = ComPtr::new();
             let hr = (*self.native.get()).CreateFontFace(face.getter_addrefs());
             assert!(hr == 0);
             FontFace::take(face)

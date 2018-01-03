@@ -79,10 +79,8 @@ fn test_glyph_image() {
     let a_index = face.get_glyph_indices(&['A' as u32])[0];
 
     let metrics = face.get_metrics();
-    println!("Metrics:\n======\n{:?}\n======", metrics);
 
     let gm = face.get_design_glyph_metrics(&[a_index], false)[0];
-    println!("Glyph metrics:\n======\n{:?}\n======", gm);
 
     let device_pixel_ratio = 1.0f32;
     let em_size = 10.0f32;

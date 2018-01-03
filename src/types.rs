@@ -4,6 +4,7 @@
 
 /* this is include!()'d in lib.rs */
 use std::mem;
+use winapi::um::dwrite::{DWRITE_FONT_STYLE, DWRITE_FONT_WEIGHT, DWRITE_FONT_STRETCH};
 
 // mirrors DWRITE_FONT_WEIGHT
 #[repr(u32)]
@@ -23,8 +24,8 @@ pub enum FontWeight {
 }
 
 impl FontWeight {
-    fn t(&self) -> winapi::DWRITE_FONT_WEIGHT {
-        unsafe { mem::transmute::<FontWeight, winapi::DWRITE_FONT_WEIGHT>(*self) }
+    fn t(&self) -> DWRITE_FONT_WEIGHT {
+        unsafe { mem::transmute::<FontWeight, DWRITE_FONT_WEIGHT>(*self) }
     }
     pub fn to_u32(&self) -> u32 { unsafe { mem::transmute::<FontWeight, u32>(*self) } }
     pub fn from_u32(v: u32) -> FontWeight { unsafe { mem::transmute::<u32, FontWeight>(v) } }
@@ -47,8 +48,8 @@ pub enum FontStretch {
 }
 
 impl FontStretch {
-    fn t(&self) -> winapi::DWRITE_FONT_STRETCH {
-        unsafe { mem::transmute::<FontStretch, winapi::DWRITE_FONT_STRETCH>(*self) }
+    fn t(&self) -> DWRITE_FONT_STRETCH {
+        unsafe { mem::transmute::<FontStretch, DWRITE_FONT_STRETCH>(*self) }
     }
     pub fn to_u32(&self) -> u32 { unsafe { mem::transmute::<FontStretch, u32>(*self) } }
     pub fn from_u32(v: u32) -> FontStretch { unsafe { mem::transmute::<u32, FontStretch>(v) } }
@@ -64,8 +65,8 @@ pub enum FontStyle {
 }
 
 impl FontStyle {
-    fn t(&self) -> winapi::DWRITE_FONT_STYLE {
-        unsafe { mem::transmute::<FontStyle, winapi::DWRITE_FONT_STYLE>(*self) }
+    fn t(&self) -> DWRITE_FONT_STYLE {
+        unsafe { mem::transmute::<FontStyle, DWRITE_FONT_STYLE>(*self) }
     }
     pub fn to_u32(&self) -> u32 { unsafe { mem::transmute::<FontStyle, u32>(*self) } }
     pub fn from_u32(v: u32) -> FontStyle { unsafe { mem::transmute::<u32, FontStyle>(v) } }

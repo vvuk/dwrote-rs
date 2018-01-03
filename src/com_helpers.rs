@@ -26,7 +26,7 @@ macro_rules! implement_iunknown {
                     } else if guid_equals!(*riid, UuidOfIUnknown) {
                         mem::transmute(This)
                     } else {
-                        return $crate::winapi::E_NOINTERFACE;
+                        return $crate::winapi::shared::winerror::E_NOINTERFACE;
                     };
 
                     (*This).AddRef();
@@ -67,7 +67,7 @@ macro_rules! implement_iunknown {
                     } else if guid_equals!(*riid, UuidOfIUnknown) {
                         mem::transmute(This)
                     } else {
-                        return $crate::winapi::E_NOINTERFACE;
+                        return $crate::winapi::shared::winerror::E_NOINTERFACE;
                     };
 
                     (*This).AddRef();
